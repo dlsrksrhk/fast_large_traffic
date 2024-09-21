@@ -33,6 +33,8 @@ dependencies {
 	//runtimeOnly 'com.mysql:mysql-connector-j'
 	implementation 'mysql:mysql-connector-java:5.1.49' //mysql 5.7
 	testRuntimeOnly 'org.junit.platform:junit-platform-launcher'
+
+	implementation 'org.springdoc:springdoc-openapi-starter-webmvc-ui:2.1.0' //swagger
 }
 
 tasks.named('test') {
