@@ -1,5 +1,6 @@
 package com.onion.backend.controller;
 
+import com.onion.backend.dto.EditArticleDto;
 import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.entity.Article;
 import com.onion.backend.service.ArticleService;
@@ -23,8 +24,9 @@ public class ArticleController {
     }
 
     @PostMapping("/{boardId}/articles")
-    public ResponseEntity<Article> writeArticle(@RequestBody WriteArticleDto writeArticleDto) {
-        return ResponseEntity.ok(articleService.writeArticle(writeArticleDto));
+    public ResponseEntity<Article> writeArticle(@PathVariable Long boardId,
+                                                @RequestBody WriteArticleDto writeArticleDto) {
+        return ResponseEntity.ok(articleService.writeArticle(boardId, writeArticleDto));
     }
 
     @GetMapping("/{boardId}/articles")
@@ -38,5 +40,11 @@ public class ArticleController {
             return ResponseEntity.ok(articleService.getNewArticle(boardId, firstId));
         }
         return ResponseEntity.ok(articleService.firstGetArticle(boardId));
+    }
+
+    @PutMapping("/{boardId}/articles/{articleId}")
+    public ResponseEntity<Article> editArticle(@PathVariable Long boardId, @PathVariable Long articleId,
+                                               @RequestBody EditArticleDto editArticleDto) {
+        return ResponseEntity.ok(articleService.editArticle(boardId, articleId, editArticleDto));
     }
 }
