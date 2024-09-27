@@ -4,24 +4,23 @@ import com.onion.backend.dto.EditArticleDto;
 import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.entity.Article;
 import com.onion.backend.service.ArticleService;
+import com.onion.backend.service.CommentService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.concurrent.CompletableFuture;
 
 @RestController
 @RequestMapping("/api/boards")
+@RequiredArgsConstructor
 public class ArticleController {
     private final AuthenticationManager authenticationManager;
     private final ArticleService articleService;
-
-    @Autowired
-    public ArticleController(AuthenticationManager authenticationManager, ArticleService articleService) {
-        this.authenticationManager = authenticationManager;
-        this.articleService = articleService;
-    }
+    private final CommentService commentService;
 
     @PostMapping("/{boardId}/articles")
     public ResponseEntity<Article> writeArticle(@PathVariable Long boardId,
@@ -52,5 +51,10 @@ public class ArticleController {
     public ResponseEntity<String> deleteArticle(@PathVariable Long boardId, @PathVariable Long articleId) {
         articleService.deleteArticle(boardId, articleId);
         return ResponseEntity.ok("article is deleted");
+    }
+
+    @GetMapping("/{boardId}/articles/{articleId}")
+    public ResponseEntity<Article> getArticleWithComment(@PathVariable Long boardId, @PathVariable Long articleId) {
+        return ResponseEntity.ok(commentService.getArticleWithComment(boardId, articleId));
     }
 }
