@@ -30,4 +30,20 @@ public class CommentController {
                                                 @RequestBody WriteCommentDto writeCommentDto) {
         return ResponseEntity.ok(commentService.writeComment(boardId, articleId, writeCommentDto));
     }
+
+    @PutMapping("/{boardId}/articles/{articleId}/comments/{commentId}")
+    public ResponseEntity<Comment> editComment(@PathVariable Long boardId,
+                                                @PathVariable Long articleId,
+                                                @PathVariable Long commentId,
+                                                @RequestBody WriteCommentDto editCommentDto) {
+        return ResponseEntity.ok(commentService.editComment(boardId, articleId, commentId, editCommentDto));
+    }
+
+    @DeleteMapping("/{boardId}/articles/{articleId}/comments/{commentId}")
+    public ResponseEntity<String> deleteComment(@PathVariable Long boardId,
+                                               @PathVariable Long articleId,
+                                               @PathVariable Long commentId) {
+        commentService.deleteComment(boardId, articleId, commentId);
+        return ResponseEntity.ok("comment is deleted");
+    }
 }

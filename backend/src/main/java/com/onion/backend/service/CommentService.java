@@ -1,7 +1,5 @@
 package com.onion.backend.service;
 
-import com.onion.backend.dto.EditArticleDto;
-import com.onion.backend.dto.WriteArticleDto;
 import com.onion.backend.dto.WriteCommentDto;
 import com.onion.backend.entity.Article;
 import com.onion.backend.entity.Board;
@@ -20,7 +18,6 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.Duration;
@@ -79,6 +76,75 @@ public class CommentService {
         return comment;
     }
 
+    @Transactional
+    public Comment editComment(Long boardId, Long articleId, Long commentId, WriteCommentDto dto) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        if (!this.isCanEditComment()) {
+            throw new RateLimitException("comment not written by rate limit");
+        }
+        Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
+        Optional<Board> board = boardRepository.findById(boardId);
+        Optional<Article> article = articleRepository.findById(articleId);
+        if (author.isEmpty()) {
+            throw new ResourceNotFoundException("author not found");
+        }
+        if (board.isEmpty()) {
+            throw new ResourceNotFoundException("board not found");
+        }
+        if (article.isEmpty()) {
+            throw new ResourceNotFoundException("article not found");
+        }
+        if (article.get().getIsDeleted()) {
+            throw new ForbiddenException("article is deleted");
+        }
+        Optional<Comment> comment = commentRepository.findById(commentId);
+        if (comment.isEmpty() || comment.get().getIsDeleted()) {
+            throw new ResourceNotFoundException("comment not found");
+        }
+        if (comment.get().getAuthor() != author.get()) {
+            throw new ForbiddenException("comment author different");
+        }
+        if (dto.getContent() != null) {
+            comment.get().setContent(dto.getContent());
+        }
+        commentRepository.save(comment.get());
+        return comment.get();
+    }
+
+    public boolean deleteComment(Long boardId, Long articleId, Long commentId) {
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        if (!this.isCanEditComment()) {
+            throw new RateLimitException("comment not written by rate limit");
+        }
+        Optional<User> author = userRepository.findByUsername(userDetails.getUsername());
+        Optional<Board> board = boardRepository.findById(boardId);
+        Optional<Article> article = articleRepository.findById(articleId);
+        if (author.isEmpty()) {
+            throw new ResourceNotFoundException("author not found");
+        }
+        if (board.isEmpty()) {
+            throw new ResourceNotFoundException("board not found");
+        }
+        if (article.isEmpty()) {
+            throw new ResourceNotFoundException("article not found");
+        }
+        if (article.get().getIsDeleted()) {
+            throw new ForbiddenException("article is deleted");
+        }
+        Optional<Comment> comment = commentRepository.findById(commentId);
+        if (comment.isEmpty() || comment.get().getIsDeleted()) {
+            throw new ResourceNotFoundException("comment not found");
+        }
+        if (comment.get().getAuthor() != author.get()) {
+            throw new ForbiddenException("comment author different");
+        }
+        comment.get().setIsDeleted(true);
+        commentRepository.save(comment.get());
+        return true;
+    }
+
     private boolean isCanWriteComment() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
@@ -93,7 +159,7 @@ public class CommentService {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
         UserDetails userDetails = (UserDetails) authentication.getPrincipal();
         Comment latestComment = commentRepository.findLatestCommentOrderByCreatedDate(userDetails.getUsername());
-        if (latestComment == null) {
+        if (latestComment == null || latestComment.getUpdatedDate() == null) {
             return true;
         }
         return this.isDifferenceMoreThanOneMinutes(latestComment.getUpdatedDate());

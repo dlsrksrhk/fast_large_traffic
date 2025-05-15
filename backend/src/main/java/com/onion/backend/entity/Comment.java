@@ -43,6 +43,13 @@ public class Comment {
     @LastModifiedDate
     private LocalDateTime updatedDate;
 
+    public void setArticle(Article article) {
+        this.article = article;
+        if (!article.getComments().contains(this)) {
+            article.getComments().add(this);
+        }
+    }
+
     @PrePersist
     protected void onCreate() {
         this.createdDate = LocalDateTime.now();
